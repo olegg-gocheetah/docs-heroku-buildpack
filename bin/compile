@@ -24,10 +24,10 @@ else
 	SWAP_ROOT_APP_DIR=_root_
 fi
 
-SUB_DIR = $BUILD_DIR/$SWAP_SUBDIR_PATH
+SUB_DIR=$BUILD_DIR/$SWAP_SUBDIR_PATH
 
 # Chec if swap source exists 
-if ! [ -d SUB_DIR ]; then
+if ! [ -d $SUB_DIR ]; then
 	echo "$SUB_DIR does not exist"
 	exit 1
 fi
@@ -43,6 +43,7 @@ echo "       copying working dir: $SWAP_SUBDIR_PATH to $TMP_DIR"
 cp -R $SUB_DIR/. $TMP_DIR/
 
 echo "       moving root dir content to $SWAP_ROOT_APP_DIR"
+mkdir $TMP_DIR/$SWAP_ROOT_APP_DIR
 mv $BUILD_DIR/* $TMP_DIR/$SWAP_ROOT_APP_DIR
 
 # At this point build dir should be already empty, if not this is not expected

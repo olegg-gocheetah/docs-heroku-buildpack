@@ -3,58 +3,50 @@
 
 # Ensure wildcards in globs match dotfiles too.
 shopt -s dotglob
+shopt -s extglob
 
 BUILD_DIR=${1:-}
-CACHE_DIR=${2:-}
+# CACHE_DIR=${2:-}
 ENV_DIR=${3:-}
 
 # Check if subdir path is defined
-if ! [ -f $ENV_DIR/SWAP_SUBDIR_PATH ]; then
-	echo "SWAP_SUBDIR_PATH is undefined"
+if ! [ -f $ENV_DIR/SWAP_SUBDIR_NAME ]; then
+	echo "SWAP_SUBDIR_NAME is undefined"
 	exit 1
 fi
 
-SWAP_SUBDIR_PATH=`cat $ENV_DIR/SWAP_SUBDIR_PATH`
+SWAP_SUBDIR_NAME=`cat $ENV_DIR/SWAP_SUBDIR_NAME`
 
 # Check if target dir for swapped root is defined
-if [ -f $ENV_DIR/SWAP_ROOT_APP_DIR ]; then
-	SWAP_ROOT_APP_DIR=`cat $ENV_DIR/SWAP_ROOT_APP_DIR`
+if [ -f $ENV_DIR/SWAP_ROOT_NAME ]; then
+	SWAP_ROOT_NAME=`cat $ENV_DIR/SWAP_ROOT_NAME`
 else
-	echo "SWAP_ROOT_APP_DIR was not defined, defaulting to \"_root_\""
-	SWAP_ROOT_APP_DIR=_root_
+	echo "SWAP_ROOT_NAME was not defined, defaulting to \"_root_\""
+	SWAP_ROOT_NAME=_root_
 fi
 
-SUB_DIR=$BUILD_DIR/$SWAP_SUBDIR_PATH
-
-# Chec if swap source exists 
-if ! [ -d $SUB_DIR ]; then
-	echo "$SUB_DIR does not exist"
+# Check if swap source exists 
+if ! [ -d $BUILD_DIR/$SWAP_SUBDIR_NAME ]; then
+	echo "$BUILD_DIR/$SWAP_SUBDIR_NAME does not exist"
 	exit 1
 fi
 
-echo "-----> Subdir buildpack in $SWAP_SUBDIR_PATH"
+# Check if swap source contains new root, if does exit with error
+if [ -d $BUILD_DIR/$SWAP_SUBDIR_NAME/$SWAP_ROOT_NAME ]; then
+	echo "$SWAP_SUBDIR_NAME must not contain \"$SWAP_ROOT_NAME\" file or directory"
+	exit 1
+fi
 
-echo "       creating cache: $CACHE_DIR"
-mkdir -p $CACHE_DIR
-TMP_DIR=`mktemp -d $CACHE_DIR/subdirXXXXX`
-echo "       created tmp dir: $TMP_DIR"
+echo "-----> Swap buildpack in $SWAP_SUBDIR_NAME"
 
-echo "       copying working dir: $SWAP_SUBDIR_PATH to $TMP_DIR"
-cp -R $SUB_DIR/. $TMP_DIR/
+echo "       create directory $SWAP_ROOT_NAME"
+mkdir $BUILD_DIR/$SWAP_ROOT_NAME
 
-echo "       moving root dir content to $SWAP_ROOT_APP_DIR"
-mkdir $TMP_DIR/$SWAP_ROOT_APP_DIR
-mv $BUILD_DIR/* $TMP_DIR/$SWAP_ROOT_APP_DIR
+echo "       move all content to $BUILD_DIR/$SWAP_ROOT_NAME"
+mv $BUILD_DIR/!($SWAP_ROOT_NAME) $BUILD_DIR/$SWAP_ROOT_NAME
 
-# At this point build dir should be already empty, if not this is not expected
-# echo "       cleaning build dir $BUILD_DIR"
-# rm -rf $BUILD_DIR/*
-
-echo "       moving swapped content from cache $TMP_DIR to build dir $BUILD_DIR"
-mv $TMP_DIR/* $BUILD_DIR/
-
-echo "       cleaning tmp dir $TMP_DIR"
-rm -rf $TMP_DIR
+echo "       copy subdir content to slug root"
+cp -R $BUILD_DIR/$SWAP_ROOT_NAME/$SWAP_SUBDIR_NAME/. $BUILD_DIR/
 
 exit 0
 

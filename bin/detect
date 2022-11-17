@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 # bin/detect <build-dir>
 
-echo "Subdir buildpack"
+echo "WebApp UI Docs buildpack"
 exit 0
